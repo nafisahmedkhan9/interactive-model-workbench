@@ -1,27 +1,25 @@
 # Interactive Model Analysis Workbench
 
-A modern, high-performance React-based notebook environment for data scientists to analyze models, run experiments, and document their findings. Built with TypeScript, Zustand, and TanStack Query.
+A modern, high-performance React-based notebook environment for data scientists to analyze models, run experiments, and document their findings. Built with TypeScript, Zustand, and modern React patterns.
 
 ## Features
 
 - 📓 **Notebook Management**: Create, delete, and manage multiple notebooks
 - 🧩 **Cell System**: Add, edit, and execute code cells with real-time output
-- 🔄 **Drag & Drop**: Reorder cells within notebooks using intuitive drag-and-drop
-- ⚡ **Performance**: Virtualized rendering for handling hundreds of cells efficiently
-- 🔌 **Jupyter Integration**: Connect to Jupyter backend for code execution
-- 📡 **Real-time Updates**: WebSocket-based real-time output streaming
+- 🔄 **Drag & Drop**: Reorder cells within notebooks using intuitive drag-and-drop with dedicated drag handles
+- ⚡ **Performance**: Optimized rendering for handling multiple cells efficiently
+- 🔌 **Jupyter Integration**: Ready for Jupyter backend integration (currently using mock API)
+- 📡 **Real-time Updates**: Simulated real-time output streaming (WebSocket ready)
 - 🎨 **Modern UI**: Beautiful, responsive interface built with Tailwind CSS
 - 🔧 **TypeScript**: Full type safety and excellent developer experience
 
 ## Tech Stack
 
 - **Framework**: React 18 with TypeScript
-- **State Management**: Zustand
-- **Server State**: TanStack Query (React Query)
+- **State Management**: Zustand for client-side state
 - **Styling**: Tailwind CSS
-- **Drag & Drop**: @dnd-kit
-- **Virtualization**: @tanstack/react-virtual
-- **Backend**: Jupyter backend integration
+- **Drag & Drop**: @dnd-kit with dedicated drag handles
+- **Backend**: Mock API service (ready for Jupyter backend integration)
 
 ## Quick Start
 
@@ -29,7 +27,6 @@ A modern, high-performance React-based notebook environment for data scientists 
 
 - Node.js 16+ 
 - npm or yarn
-- Jupyter backend server (optional for development)
 
 ### Installation
 
@@ -61,15 +58,15 @@ src/
 │   ├── Workbench.tsx   # Main application component
 │   ├── NotebookSidebar.tsx
 │   ├── NotebookArea.tsx
-│   ├── Cell.tsx
-│   └── SortableCell.tsx
+│   ├── Cell.tsx        # Individual cell with editing and execution
+│   └── SortableCell.tsx # Drag-and-drop wrapper for cells
 ├── store/              # Zustand state management
 │   └── notebookStore.ts
 ├── services/           # API and external services
-│   └── api.ts
+│   └── api.ts         # Mock API service (ready for Jupyter integration)
 ├── types/              # TypeScript type definitions
 │   └── index.ts
-├── App.tsx             # Root component
+├── App.tsx             # Root component with QueryClient setup
 └── index.tsx           # Application entry point
 ```
 
@@ -79,55 +76,6 @@ src/
 - `npm build` - Build for production
 - `npm test` - Run tests
 - `npm eject` - Eject from Create React App
-
-### Environment Variables
-
-Create a `.env` file in the root directory:
-
-```env
-REACT_APP_JUPYTER_API_URL=http://localhost:8888/api
-```
-
-## Jupyter Backend Integration
-
-### Setting up Jupyter Backend
-
-1. **Using Docker** (Recommended):
-```bash
-docker run -p 8888:8888 jupyter/notebook
-```
-
-2. **Local Installation**:
-```bash
-pip install jupyter
-jupyter notebook --port=8888 --no-browser
-```
-
-### API Endpoints
-
-The application expects the following Jupyter API endpoints:
-
-- `GET /api/notebooks` - List notebooks
-- `POST /api/notebooks` - Create notebook
-- `GET /api/notebooks/{id}` - Get notebook
-- `DELETE /api/notebooks/{id}` - Delete notebook
-- `POST /api/kernels` - Start kernel
-- `POST /api/kernels/{id}/execute` - Execute cell
-- `WS /api/kernels/{id}/channels` - WebSocket for real-time output
-
-### WebSocket Integration
-
-The application establishes WebSocket connections to receive real-time execution output:
-
-```typescript
-// Example WebSocket message format
-{
-  type: 'stream' | 'display_data' | 'execute_result' | 'error',
-  content: string | object,
-  cellId: string,
-  timestamp: number
-}
-```
 
 ## Architecture
 
@@ -148,10 +96,10 @@ interface NotebookState {
 
 ### Performance Optimization
 
-- **Virtualization**: Uses `@tanstack/react-virtual` for efficient rendering of large cell lists
-- **Drag & Drop**: Implements smooth drag-and-drop with `@dnd-kit`
-- **Memoization**: Components are optimized with React.memo where appropriate
-- **Lazy Loading**: Code splitting for better initial load times
+- **Efficient Rendering**: Optimized component structure with proper state management
+- **Drag & Drop**: Implements smooth drag-and-drop with @dnd-kit and dedicated drag handles
+- **Event Handling**: Sophisticated event handling to prevent conflicts between drag operations and interactive elements
+- **Focus Management**: Proper focus handling for editing and interaction
 
 ### Component Architecture
 
@@ -159,10 +107,9 @@ interface NotebookState {
 Workbench
 ├── NotebookSidebar (Notebook management)
 └── NotebookArea
-    ├── NotebookHeader (Notebook info and actions)
-    └── VirtualizedCellList
+    └── Cell List (Currently non-virtualized for drag-and-drop compatibility)
         └── SortableCell
-            └── Cell (Individual code cell)
+            └── Cell (Individual code cell with drag handle)
 ```
 
 ## Features in Detail
@@ -176,25 +123,72 @@ Workbench
 
 ### Cell System
 
-- **Code Cells**: Execute Python code with real-time output
-- **Markdown Cells**: Rich text documentation (planned)
+- **Code Cells**: Execute code with simulated real-time output
 - **Cell Status**: Visual indicators for idle, running, completed, and error states
 - **Execution Count**: Track how many times each cell has been executed
 - **Output History**: Maintain history of all cell outputs
+- **Editing**: Inline editing with proper focus management and keyboard shortcuts
 
-### Real-time Execution
+### Interactive Features
 
-- **Live Output**: Stream execution results in real-time
+- **Drag & Drop**: Reorder cells using dedicated drag handles to prevent interference with buttons and textarea
+- **Keyboard Shortcuts**: Ctrl+Enter to run cells
+- **Click to Edit**: Single click to enter edit mode, double-click for immediate editing
+- **Run/Edit Buttons**: Functional buttons with proper event handling
+
+### Real-time Execution (Simulated)
+
+- **Live Output**: Simulated real-time execution output
 - **Error Handling**: Graceful handling of execution errors
-- **Status Updates**: Real-time kernel and cell status updates
-- **WebSocket Management**: Automatic connection management per notebook
+- **Status Updates**: Real-time cell status updates
+- **WebSocket Ready**: Architecture prepared for real WebSocket integration
 
-### Drag & Drop
+## Technical Implementation Highlights
 
-- **Intuitive Interface**: Drag cells to reorder them
-- **Visual Feedback**: Clear visual indicators during drag operations
-- **Smooth Animations**: CSS transforms for fluid movement
-- **Accessibility**: Keyboard navigation support
+### Event Handling Architecture
+
+The application implements sophisticated event handling to resolve conflicts between:
+- Drag-and-drop operations
+- Button clicks (Run/Edit)
+- Textarea input and focus
+- Cell editing interactions
+
+### Drag Handle Implementation
+
+- **Dedicated Drag Handle**: Small icon in cell header for drag operations
+- **Event Isolation**: Prevents drag listeners from interfering with interactive elements
+- **Visual Feedback**: Clear drag indicators and smooth animations
+
+### State Synchronization
+
+- **Local State**: Each cell maintains local editing state
+- **Global State**: Zustand store manages notebook and cell data
+- **Real-time Updates**: Simulated WebSocket integration for output streaming
+
+## Future Enhancements
+
+### Planned Features
+
+1. **Jupyter Backend Integration**: Replace mock API with real Jupyter backend
+2. **Virtualization**: Re-enable virtualized rendering with drag-and-drop compatibility
+3. **Real-time Collaboration**: Multi-user editing capabilities
+4. **Advanced Visualization**: Rich output rendering for charts and graphs
+5. **Export Options**: PDF, HTML, and other export formats
+
+### Backend Integration
+
+The application is designed to integrate with Jupyter backends. The mock API service can be replaced with real Jupyter API calls:
+
+```typescript
+// Example Jupyter API integration
+const apiService = {
+  async executeCell(request: ExecuteCellRequest) {
+    // Replace with actual Jupyter API call
+    return await jupyterAPI.execute(request);
+  },
+  // ... other methods
+};
+```
 
 ## Contributing
 
@@ -226,12 +220,6 @@ npm test
 npm test -- --coverage
 ```
 
-### E2E Testing
-
-```bash
-npm run test:e2e
-```
-
 ## Deployment
 
 ### Production Build
@@ -257,20 +245,17 @@ CMD ["npm", "start"]
 
 ### Common Issues
 
-1. **WebSocket Connection Failed**
-   - Ensure Jupyter backend is running
-   - Check firewall settings
-   - Verify WebSocket endpoint configuration
+1. **Drag and Drop Not Working**
+   - Ensure you're using the drag handle (small icon) in the cell header
+   - Check that no interactive elements are blocking the drag area
 
-2. **Performance Issues with Large Notebooks**
-   - Ensure virtualization is working correctly
-   - Check browser memory usage
-   - Consider reducing cell output history
+2. **Cell Editing Issues**
+   - Click the "Edit" button or double-click the cell content
+   - Use Ctrl+Enter to run cells while editing
 
-3. **TypeScript Errors**
-   - Run `npm install` to ensure all dependencies are installed
-   - Check TypeScript configuration
-   - Verify type definitions are up to date
+3. **Performance Issues**
+   - The current implementation is optimized for moderate numbers of cells
+   - Virtualization can be re-enabled for large notebooks
 
 ### Debug Mode
 
@@ -286,9 +271,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Acknowledgments
 
-- [Jupyter](https://jupyter.org/) for the backend integration
+- [Jupyter](https://jupyter.org/) for the backend integration design
 - [Zustand](https://github.com/pmndrs/zustand) for state management
-- [TanStack](https://tanstack.com/) for React Query and Virtual
 - [dnd-kit](https://dndkit.com/) for drag and drop functionality
 - [Tailwind CSS](https://tailwindcss.com/) for styling
 

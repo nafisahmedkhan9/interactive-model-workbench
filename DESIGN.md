@@ -8,11 +8,9 @@ The Interactive Model Analysis Workbench is a React-based application that provi
 
 - **Framework**: React 18 with TypeScript
 - **State Management**: Zustand for client-side state
-- **Server State**: TanStack Query (React Query) for API calls
 - **Styling**: Tailwind CSS for utility-first styling
 - **Drag & Drop**: @dnd-kit for modern drag-and-drop functionality
-- **Virtualization**: @tanstack/react-virtual for performance optimization
-- **Backend Integration**: Jupyter backend with WebSocket support
+- **Backend Integration**: Mock API service (ready for Jupyter backend integration)
 
 ## Architecture
 
@@ -47,22 +45,21 @@ interface NotebookState {
 - **WebSocket Management**: `setWebSocketConnection`, `removeWebSocketConnection`, `updateCellOutput`
 - **UI State**: `setLoading`, `setError`
 
-### 2. WebSocket Connection Strategy
+### 2. Event Handling Architecture
 
-The application manages WebSocket connections per notebook to enable real-time communication with the Jupyter backend.
+The application implements sophisticated event handling to resolve conflicts between drag-and-drop operations and interactive elements.
 
-#### Connection Management:
+#### Event Handling Strategy:
 
-1. **Per-Notebook Connections**: Each notebook maintains its own WebSocket connection
-2. **Connection Lifecycle**: Connections are created when kernels start and cleaned up when notebooks are closed
-3. **Message Handling**: Real-time output is processed and stored in cell output arrays
-4. **Error Handling**: Connection failures are handled gracefully with user feedback
+1. **Dedicated Drag Handles**: Small icons in cell headers for drag operations
+2. **Event Isolation**: Prevents drag listeners from interfering with buttons and textarea
+3. **Focus Management**: Proper focus handling for editing and interaction
+4. **Event Prevention**: Strategic use of `preventDefault()` and `stopPropagation()`
 
-#### WebSocket Message Flow:
+#### Event Flow:
 
 ```
-User clicks "Run" → Update cell in backend → Send code via WebSocket → 
-Receive real-time output → Update cell output → Update UI
+User Interaction → Event Handler → State Update → UI Re-render
 ```
 
 ### 3. Component Architecture
@@ -77,12 +74,11 @@ Workbench
 │   ├── NotebookList
 │   └── CreateNotebookForm
 └── NotebookArea
-    ├── NotebookHeader
-    └── VirtualizedCellList
+    └── Cell List (Currently non-virtualized for drag-and-drop compatibility)
         └── SortableCell
             └── Cell
-                ├── CellHeader
-                ├── CellContent
+                ├── CellHeader (with drag handle)
+                ├── CellContent (editable textarea)
                 └── CellOutput
 ```
 
@@ -90,24 +86,25 @@ Workbench
 
 1. **Workbench**: Main container component that orchestrates the entire application
 2. **NotebookSidebar**: Manages notebook list and creation
-3. **NotebookArea**: Contains the virtualized cell list with drag-and-drop
-4. **Cell**: Individual code cell with execution capabilities
+3. **NotebookArea**: Contains the cell list with drag-and-drop functionality
+4. **Cell**: Individual code cell with execution capabilities and editing
 5. **SortableCell**: Wrapper component that adds drag-and-drop functionality
 
 ### 4. Performance Optimization
 
-#### Virtualization Strategy
+#### Current Implementation:
 
-The application uses `@tanstack/react-virtual` to handle large numbers of cells efficiently:
+- **Efficient Rendering**: Optimized component structure with proper state management
+- **Drag-and-Drop Performance**: Uses `@dnd-kit/sortable` for efficient reordering
+- **Event Handling**: Sophisticated event handling to prevent conflicts
+- **Memory Management**: Proper cleanup and state management
 
-- **Dynamic Sizing**: Cells have variable heights based on content
-- **Overscan**: 5 cells are rendered outside the viewport for smooth scrolling
-- **Estimated Size**: 200px base height with dynamic adjustment
-- **Memory Management**: Only visible cells are rendered, reducing DOM nodes
+#### Future Virtualization Strategy:
 
-#### Implementation Details:
+The application is designed to support virtualization but currently uses a non-virtualized approach for better drag-and-drop compatibility:
 
 ```typescript
+// Future virtualization implementation
 const virtualizer = useVirtualizer({
   count: notebook.cells.length,
   getScrollElement: () => parentRef.current,
@@ -125,14 +122,9 @@ const virtualizer = useVirtualizer({
 
 ### 5. API Integration Strategy
 
-#### Backend Communication:
+#### Current Mock Implementation:
 
-1. **RESTful Endpoints**: Standard HTTP methods for CRUD operations
-2. **WebSocket Real-time**: Live execution output and status updates
-3. **Error Handling**: Graceful degradation when backend is unavailable
-4. **Caching**: TanStack Query for intelligent caching and background updates
-
-#### API Service Structure:
+The application uses a mock API service that simulates Jupyter backend functionality:
 
 ```typescript
 export const apiService = {
@@ -153,6 +145,13 @@ export const apiService = {
   createWebSocketConnection,
 };
 ```
+
+#### Backend Communication Strategy:
+
+1. **Mock API**: Simulates Jupyter backend functionality for development
+2. **Real-time Simulation**: Simulated WebSocket integration for output streaming
+3. **Error Handling**: Graceful degradation when backend is unavailable
+4. **Integration Ready**: Architecture prepared for real Jupyter backend integration
 
 ### 6. TypeScript Design
 
@@ -211,13 +210,13 @@ interface Notebook {
 
 - **Component Level**: Individual components handle their own errors
 - **Store Level**: Zustand store manages global error state
-- **API Level**: TanStack Query handles API error states
+- **API Level**: Mock API handles error states gracefully
 - **User Feedback**: Clear error messages and recovery options
 
 #### Error Recovery:
 
-1. **Network Failures**: Automatic retry with exponential backoff
-2. **WebSocket Disconnection**: Automatic reconnection attempts
+1. **Network Failures**: Graceful handling of API failures
+2. **WebSocket Disconnection**: Simulated reconnection attempts
 3. **Cell Execution Errors**: Clear error display with retry options
 4. **State Corruption**: Automatic state recovery mechanisms
 
@@ -227,35 +226,56 @@ interface Notebook {
 
 - **Unit Tests**: Individual component and function testing
 - **Integration Tests**: Component interaction testing
-- **E2E Tests**: Full user workflow testing
-- **Performance Tests**: Virtualization and large dataset handling
+- **E2E Tests**: Full user workflow testing (planned)
+- **Performance Tests**: Drag-and-drop and interaction testing
 
 #### Testing Tools:
 
 - **Jest**: Unit and integration testing
 - **React Testing Library**: Component testing
-- **Cypress**: E2E testing
-- **MSW**: API mocking
+- **Manual Testing**: Interactive feature testing
 
 ### 10. Future Enhancements
 
 #### Planned Features:
 
-1. **Real-time Collaboration**: Multi-user editing capabilities
-2. **Plugin System**: Extensible architecture for custom components
-3. **Advanced Visualization**: Rich output rendering for charts and graphs
-4. **Version Control**: Git integration for notebook versioning
+1. **Jupyter Backend Integration**: Replace mock API with real Jupyter backend
+2. **Virtualization**: Re-enable virtualized rendering with drag-and-drop compatibility
+3. **Real-time Collaboration**: Multi-user editing capabilities
+4. **Advanced Visualization**: Rich output rendering for charts and graphs
 5. **Export Options**: PDF, HTML, and other export formats
 
 #### Scalability Considerations:
 
-- **Micro-frontend Architecture**: Potential for component-based scaling
-- **Service Worker**: Offline capabilities and caching
-- **WebAssembly**: Performance-critical computations
-- **Progressive Web App**: Native app-like experience
+- **Large Notebooks**: Virtualization for handling hundreds of cells
+- **Real-time Updates**: WebSocket integration for live collaboration
+- **Performance**: Optimized rendering and state management
+- **Extensibility**: Plugin architecture for custom components
+
+## Technical Implementation Highlights
+
+### Event Handling Resolution
+
+The application successfully resolves complex event handling conflicts:
+
+1. **Drag Handle Isolation**: Dedicated drag handles prevent interference with interactive elements
+2. **Event Prevention**: Strategic use of `preventDefault()` and `stopPropagation()`
+3. **Focus Management**: Proper focus handling for editing and interaction
+4. **Button Functionality**: Run and Edit buttons work reliably without drag interference
+
+### State Synchronization
+
+- **Local State**: Each cell maintains local editing state
+- **Global State**: Zustand store manages notebook and cell data
+- **Real-time Updates**: Simulated WebSocket integration for output streaming
+
+### Performance Optimizations
+
+- **Efficient Re-renders**: Optimized component structure
+- **Event Handling**: Sophisticated event management
+- **Memory Management**: Proper cleanup and state management
+- **Drag Performance**: Smooth drag-and-drop with visual feedback
 
 ## Conclusion
 
-The Interactive Model Analysis Workbench is designed with performance, scalability, and developer experience in mind. The combination of Zustand for state management, virtualization for performance, and a well-structured component architecture provides a solid foundation for building a production-ready notebook environment.
-
-The modular design allows for easy extension and maintenance, while the TypeScript implementation ensures type safety and reduces runtime errors. The integration with Jupyter backend provides the necessary computational capabilities while maintaining a modern, responsive user interface. 
+The Interactive Model Analysis Workbench demonstrates modern React development practices with a focus on user experience and maintainability. The architecture is designed to be extensible and ready for real backend integration while providing a solid foundation for future enhancements. 
